@@ -1,21 +1,26 @@
+package CRUD_23090135_C_2025;
+
 import com.mongodb.client.*;
 import org.bson.Document;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.result.UpdateResult;
+import com.mongodb.client.result.DeleteResult;
 
 import java.util.Scanner;
 
 public class CRUD_23090135_C_2025 {
-   // Setup koneksi MongoDB
+
+    // Setup koneksi MongoDB
     static MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
     static MongoDatabase database = mongoClient.getDatabase("uts_23090135_C_2025");
-    static MongoCollection<Document> collection = database.getCollection("cool_23090135_C_2025");
+    static MongoCollection<Document> collection = database.getCollection("coll_23090135_C_2025");
 
     static Scanner input = new Scanner(System.in);
 
     public static void main(String[] args) {
         int pilihan;
         do {
-            System.out.println("\n=== APLIKASI CRUD MONGODB - UTS ===");
+            System.out.println("\n=== CRUD Manajemen Data Mahasiswa ===");
             System.out.println("1. Create Data");
             System.out.println("2. Read Data");
             System.out.println("3. Update Data");
@@ -24,7 +29,7 @@ public class CRUD_23090135_C_2025 {
             System.out.println("0. Keluar");
             System.out.print("Pilih menu: ");
             pilihan = input.nextInt();
-            input.nextLine(); // buang newline
+            input.nextLine(); // membersihkan newline
 
             switch (pilihan) {
                 case 1 -> createData();
@@ -32,16 +37,18 @@ public class CRUD_23090135_C_2025 {
                 case 3 -> updateData();
                 case 4 -> deleteData();
                 case 5 -> searchData();
+                case 0 -> System.out.println("Terima kasih!");
+                default -> System.out.println("Pilihan tidak valid.");
             }
         } while (pilihan != 0);
 
         mongoClient.close();
     }
 
-    // Create: Tambah 3 data dengan dimensi berbeda
+    // CREATE: Menambahkan 3 data mahasiswa
     public static void createData() {
         for (int i = 1; i <= 3; i++) {
-            System.out.println("Masukkan data ke-" + i);
+            System.out.println("\nMasukkan data ke-" + i);
             System.out.print("NIM     : ");
             String nim = input.nextLine();
             System.out.print("Nama    : ");
@@ -55,44 +62,69 @@ public class CRUD_23090135_C_2025 {
                     .append("nama", nama)
                     .append("kelas", kelas)
                     .append("tahun", tahun);
+
             collection.insertOne(doc);
-            System.out.println("Data ke-" + i + " berhasil disimpan.\n");
+            System.out.println("Data ke-" + i + " berhasil disimpan.");
         }
     }
 
-    // Read: Menampilkan semua data
+    // READ: Menampilkan semua data
     public static void readData() {
-        System.out.println("\n=== DATA YANG TERSIMPAN ===");
+        System.out.println("\n=== Data Mahasiswa ===");
         FindIterable<Document> docs = collection.find();
         for (Document doc : docs) {
             System.out.println(doc.toJson());
         }
     }
 
-    // Update: Mengubah salah satu value berdasarkan nim
+    // UPDATE: Mengubah seluruh data berdasarkan NIM lama
     public static void updateData() {
         System.out.print("Masukkan NIM yang ingin diubah: ");
-        String nim = input.nextLine();
+        String nimLama = input.nextLine().trim();
 
-        System.out.print("Masukkan nama baru: ");
+        System.out.println("Masukkan data baru:");
+        System.out.print("NIM Baru     : ");
+        String nimBaru = input.nextLine();
+        System.out.print("Nama Baru    : ");
         String namaBaru = input.nextLine();
+        System.out.print("Kelas Baru   : ");
+        String kelasBaru = input.nextLine();
+        System.out.print("Tahun Baru   : ");
+        String tahunBaru = input.nextLine();
 
-        collection.updateOne(Filters.eq("nim", nim), new Document("$set", new Document("nama", namaBaru)));
-        System.out.println("Data berhasil diupdate.");
+        Document dataBaru = new Document("nim", nimBaru)
+                .append("nama", namaBaru)
+                .append("kelas", kelasBaru)
+                .append("tahun", tahunBaru);
+
+        UpdateResult result = collection.updateOne(Filters.eq("nim", nimLama), new Document("$set", dataBaru));
+
+        if (result.getModifiedCount() > 0) {
+            System.out.println("Data berhasil diupdate.");
+        } else {
+            System.out.println("Data tidak ditemukan atau tidak diubah.");
+        }
     }
 
-    // Delete: Menghapus berdasarkan nim
+    // DELETE: Menghapus data berdasarkan NIM
     public static void deleteData() {
-        System.out.print("Masukkan NIM yang ingin dihapus: ");
+        System.out.print("Masukkan NIM mahasiswa yang akan dihapus: ");
         String nim = input.nextLine();
-        collection.deleteOne(Filters.eq("nim", nim));
-        System.out.println("Data berhasil dihapus.");
+
+        DeleteResult result = collection.deleteOne(Filters.eq("nim", nim));
+
+        if (result.getDeletedCount() > 0) {
+            System.out.println("Data berhasil dihapus.");
+        } else {
+            System.out.println("Data tidak ditemukan.");
+        }
     }
 
-    // Search: Mencari berdasarkan nama
+    // SEARCH: Mencari data berdasarkan nama (dengan regex)
     public static void searchData() {
         System.out.print("Masukkan nama yang dicari: ");
         String keyword = input.nextLine();
+
         FindIterable<Document> docs = collection.find(Filters.regex("nama", ".*" + keyword + ".*", "i"));
 
         System.out.println("Hasil pencarian:");
@@ -101,6 +133,3 @@ public class CRUD_23090135_C_2025 {
         }
     }
 }
-
-    
-
